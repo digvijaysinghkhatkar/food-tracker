@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
 import darkTheme, { gradients } from '../../theme/darkTheme';
-import { GradientButton, GradientBackground } from '../../components/ui/GradientComponents';
-
+import { GradientBackground } from '../../components/ui/GradientComponents';
 import { useAuth } from '../../contexts/AuthContext';
+
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -18,22 +19,27 @@ export default function RegisterScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   
-  const { register, error, loading, isAuthenticated, isNewUser } = useAuth();
+  const { register, isAuthenticated, isNewUser, loading, error } = useAuth();
   const router = useRouter();
   
   // Redirect if already authenticated
   useEffect(() => {
+    console.log('Auth state changed:', { isAuthenticated, isNewUser });
+    
     if (isAuthenticated) {
       if (isNewUser) {
         // Redirect to onboarding if new user
+        console.log('Redirecting to onboarding...');
         router.replace('/onboarding');
       } else {
         // Redirect to main app if returning user
+        console.log('Redirecting to main app...');
         router.replace('/(tabs)');
       }
     }
-  }, [isAuthenticated, isNewUser]);
+  }, [isAuthenticated, isNewUser, router]);
   
+  // Handle registration
   const handleRegister = async () => {
     if (!name || !email || !password || !confirmPassword) {
       setErrorMsg('Please fill in all fields');
@@ -68,11 +74,13 @@ export default function RegisterScreen() {
       <StatusBar style="light" />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join Food Tracker to start your health journey</Text>
+          <Text style={styles.subtitle}>Join Balanced Bites and start your healthy journey</Text>
         </View>
         
+        {/* Form Section */}
         <View style={styles.form}>
           <TextInput
             label="Full Name"
@@ -158,23 +166,29 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 40,
+    paddingTop: 40,
+    paddingBottom: 30,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 8,
     color: darkTheme.colors.primary,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco Display' : 'sans-serif',
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: darkTheme.colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
+    lineHeight: 22,
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
   },
   form: {
     paddingHorizontal: 24,
+    marginTop: 20,
   },
   input: {
     marginBottom: 16,
@@ -197,5 +211,17 @@ const styles = StyleSheet.create({
   link: {
     color: darkTheme.colors.primary,
     fontWeight: 'bold',
+  },
+  verificationText: {
+    textAlign: 'center',
+    marginBottom: 24,
+    color: darkTheme.colors.textSecondary,
+  },
+  backLink: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  backLinkText: {
+    color: darkTheme.colors.primary,
   },
 });

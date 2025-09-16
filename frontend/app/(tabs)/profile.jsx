@@ -2,17 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, Alert } from 'react-native';
 import { Text, Card, Button, TextInput, ActivityIndicator, Divider, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../../contexts/AuthContext';
 import { GradientBackground } from '../../components/ui/GradientComponents';
 import darkTheme, { gradients } from '../../theme/darkTheme';
 import { API_URL } from '../../constants';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProfileScreen() {
-  const { user, token, logout, updateProfile } = useAuth();
   const router = useRouter();
+  const { user, token, isAuthenticated, logout, updateUserProfile, fetchUserProfile, loading: authLoading } = useAuth();
+  
+  // Redirect to welcome page if not authenticated (but wait for auth loading to complete)
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      const timer = setTimeout(() => {
+        router.replace('/welcome');
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, authLoading, router]);
   
   const [loading, setLoading] = useState(false);
+  const [calculatingNutrition, setCalculatingNutrition] = useState(false);
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -29,9 +40,10 @@ export default function ProfileScreen() {
   
   const [isEditing, setIsEditing] = useState(false);
   
-  // Load user data on component mount
+    // Load user data on component mount
   useEffect(() => {
     if (user) {
+      console.log('Loading user data:', user);
       setUserData({
         name: user.name || '',
         email: user.email || '',
@@ -50,8 +62,17 @@ export default function ProfileScreen() {
   
   // Handle logout
   const handleLogout = async () => {
-    await logout();
-    router.replace('/auth/login');
+    try {
+      const success = await logout();
+      if (success) {
+        router.replace('/welcome');
+      } else {
+        Alert.alert('Error', 'Failed to log out. Please try again.');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'An error occurred while logging out.');
+    }
   };
   
   // Handle save profile
@@ -67,19 +88,69 @@ export default function ProfileScreen() {
         height: userData.height ? parseFloat(userData.height) : undefined,
       };
       
-      const success = await updateProfile(payload);
-      
+      // Use the auth context to update profile
+      const success = await updateUserProfile(payload);
       if (success) {
         setIsEditing(false);
         Alert.alert('Success', 'Profile updated successfully');
       } else {
-        Alert.alert('Error', 'Failed to update profile');
+        Alert.alert('Error', 'Failed to update profile. Please try again.');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
       Alert.alert('Error', 'Failed to update profile');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Calculate AI-powered nutrition goals
+  const calculateAINutritionGoals = async () => {
+    try {
+      setCalculatingNutrition(true);
+      
+      // Check if user has basic required info
+      if (!user.age || !user.weight || !user.height || !user.gender || !user.activityLevel) {
+        Alert.alert(
+          'Missing Information', 
+          'Please complete your profile (age, weight, height, gender, activity level) before calculating nutrition goals.'
+        );
+        return;
+      }
+      
+      const response = await axios.post(
+        `${API_URL}/diet-plan/calculate-nutrition-goals`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      
+      console.log('Nutrition goals calculated:', response.data);
+      
+      Alert.alert(
+        'Success!', 
+        `Your personalized nutrition goals have been calculated and updated in your profile!\n\n` +
+        `Daily Goals:\n` +
+        `• Calories: ${response.data.nutritionGoals?.calories || 'N/A'} kcal\n` +
+        `• Protein: ${response.data.nutritionGoals?.protein || 'N/A'} g\n` +
+        `• Carbs: ${response.data.nutritionGoals?.carbs || 'N/A'} g\n` +
+        `• Fat: ${response.data.nutritionGoals?.fat || 'N/A'} g`
+      );
+      
+      // Refresh user data to show updated nutrition goals
+      if (fetchUserProfile) {
+        await fetchUserProfile();
+      }
+      
+    } catch (error) {
+      console.error('Error calculating nutrition goals:', error);
+      Alert.alert(
+        'Error', 
+        error.response?.data?.message || 'Failed to calculate nutrition goals. Please try again.'
+      );
+    } finally {
+      setCalculatingNutrition(false);
     }
   };
   
@@ -156,8 +227,12 @@ export default function ProfileScreen() {
         <Card.Content>
           <View style={styles.header}>
             <View>
-              <Text style={styles.name}>{user?.name || 'User'}</Text>
-              <Text style={styles.email}>{user?.email || ''}</Text>
+              <Text style={styles.name}>
+                {userData.name || user?.name || 'User'}
+              </Text>
+              <Text style={styles.email}>
+                {userData.email || user?.email || 'No email'}
+              </Text>
             </View>
             <Button 
               mode="outlined" 
@@ -400,14 +475,28 @@ export default function ProfileScreen() {
               </View>
               
               <View style={styles.metricCard}>
-                <Text style={styles.metricValue}>{calorieNeeds || '--'}</Text>
+                <Text style={styles.metricValue}>
+                  {calorieNeeds || '--'}
+                </Text>
                 <Text style={styles.metricLabel}>Daily Calories</Text>
-                <Text style={styles.metricSubtext}>Estimated need</Text>
+                <Text style={styles.metricSubtext}>Estimated</Text>
               </View>
             </View>
+
+
+            <Button
+              mode="contained"
+              onPress={calculateAINutritionGoals}
+              style={styles.aiButton}
+              loading={calculatingNutrition}
+              disabled={calculatingNutrition}
+              icon="robot"
+            >
+              {calculatingNutrition ? 'Calculating...' : 'Calculate AI Nutrition Goals'}
+            </Button>
             
             <Text style={styles.disclaimer}>
-              These are estimates based on your profile information. Consult with a healthcare professional for personalized advice.
+              Balanced Bites AI calculations are based on your profile information. Consult with a healthcare professional for personalized advice.
             </Text>
           </Card.Content>
         </Card>
@@ -557,5 +646,41 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 16,
+  },
+  nutritionGoalsContainer: {
+    marginVertical: 16,
+    padding: 16,
+    backgroundColor: 'rgba(156, 124, 244, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(156, 124, 244, 0.3)',
+  },
+  nutritionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: darkTheme.colors.text,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  nutritionGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  nutritionItem: {
+    alignItems: 'center',
+  },
+  nutritionValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#9C7CF4',
+  },
+  nutritionLabel: {
+    fontSize: 12,
+    color: darkTheme.colors.textSecondary,
+    marginTop: 4,
+  },
+  aiButton: {
+    marginTop: 16,
+    backgroundColor: '#9C7CF4',
   },
 });

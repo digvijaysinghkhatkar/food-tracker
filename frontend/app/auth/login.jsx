@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { Text, TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, useRouter } from 'expo-router';
 import darkTheme, { gradients } from '../../theme/darkTheme';
-import { GradientButton, GradientBackground } from '../../components/ui/GradientComponents';
-
+import { GradientBackground } from '../../components/ui/GradientComponents';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function LoginScreen() {
@@ -16,35 +15,30 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   
-  const { login, error, loading, isAuthenticated, isNewUser } = useAuth();
+  const { login, isAuthenticated, loading, error } = useAuth();
   const router = useRouter();
   
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      if (isNewUser) {
-        // Redirect to onboarding if new user
-        router.replace('/onboarding');
-      } else {
-        // Redirect to main app if returning user
-        router.replace('/(tabs)');
-      }
+      router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isNewUser]);
+  }, [isAuthenticated, router]);
   
+  // Handle login
   const handleLogin = async () => {
-    if (!email || !password) {
-      setErrorMsg('Please fill in all fields');
+    if (!email.trim() || !password) {
+      setErrorMsg('Please enter your email and password');
       return;
     }
     
     setIsSubmitting(true);
     setErrorMsg('');
     
-    const success = await login(email, password);
+    const success = await login(email.trim(), password);
     
     if (!success) {
-      setErrorMsg(error || 'Login failed. Please try again.');
+      setErrorMsg(error || 'Login failed. Please check your credentials.');
     }
     
     setIsSubmitting(false);
@@ -55,60 +49,61 @@ export default function LoginScreen() {
       <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
       
-      <View style={styles.header}>
-        <Text style={styles.title}>Food Tracker</Text>
-        <Text style={styles.subtitle}>Track your meals and nutrition</Text>
-      </View>
-      
-      <View style={styles.form}>
-        <TextInput
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          mode="outlined"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        
-        <TextInput
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          style={styles.input}
-          mode="outlined"
-          secureTextEntry={!showPassword}
-          right={
-            <TextInput.Icon
-              icon={showPassword ? "eye-off" : "eye"}
-              onPress={() => setShowPassword(!showPassword)}
-            />
-          }
-        />
-        
-        {errorMsg ? (
-          <Text style={styles.errorText}>{errorMsg}</Text>
-        ) : null}
-        
-        <Button
-          mode="contained"
-          onPress={handleLogin}
-          style={styles.button}
-          loading={isSubmitting}
-          disabled={isSubmitting || loading}
-        >
-          Login
-        </Button>
-        
-        <View style={styles.linkContainer}>
-          <Text>Don't have an account? </Text>
-          <Link href="/auth/register" asChild>
-            <TouchableOpacity>
-              <Text style={styles.link}>Register</Text>
-            </TouchableOpacity>
-          </Link>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to continue to Balanced Bites</Text>
         </View>
-      </View>
+        
+        {/* Form Section */}
+        <View style={styles.form}>
+          <TextInput
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            style={styles.input}
+            mode="outlined"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            disabled={isSubmitting}
+          />
+          
+          <TextInput
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            style={styles.input}
+            mode="outlined"
+            secureTextEntry={!showPassword}
+            disabled={isSubmitting}
+            right={<TextInput.Icon icon={showPassword ? "eye-off" : "eye"} onPress={() => setShowPassword(!showPassword)} />}
+          />
+          
+          {errorMsg ? (
+            <Text style={styles.errorText}>{errorMsg}</Text>
+          ) : null}
+          
+          <Button
+            mode="contained"
+            onPress={handleLogin}
+            style={styles.button}
+            loading={isSubmitting}
+            disabled={isSubmitting || loading}
+          >
+            Log In
+          </Button>
+          
+          <View style={styles.linkContainer}>
+            <Text>Don't have an account? </Text>
+            <Link href="/auth/register" asChild>
+              <TouchableOpacity>
+                <Text style={styles.link}>Sign Up</Text>
+              </TouchableOpacity>
+            </Link>
+          </View>
+        </View>
+      </ScrollView>
       </SafeAreaView>
     </GradientBackground>
   );
@@ -121,23 +116,35 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
+  },
   header: {
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 40,
+    paddingTop: 60,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: 8,
     color: darkTheme.colors.primary,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco Display' : 'sans-serif',
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: darkTheme.colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: 32,
+    lineHeight: 22,
+    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
   },
   form: {
     paddingHorizontal: 24,
+    marginTop: 20,
   },
   input: {
     marginBottom: 16,
@@ -160,5 +167,17 @@ const styles = StyleSheet.create({
   link: {
     color: darkTheme.colors.primary,
     fontWeight: 'bold',
+  },
+  verificationText: {
+    textAlign: 'center',
+    marginBottom: 24,
+    color: darkTheme.colors.textSecondary,
+  },
+  backLink: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  backLinkText: {
+    color: darkTheme.colors.primary,
   },
 });

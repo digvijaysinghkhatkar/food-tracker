@@ -1,23 +1,23 @@
+// app/(auth)/_layout.jsx
 import React from 'react';
-import { Stack } from 'expo-router';
+import { Stack, Redirect } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function AuthLayout() {
+  const { isAuthenticated, isNewUser } = useAuth();
+
+  if (isAuthenticated && isNewUser) {
+    return <Redirect href="/onboarding" />;
+  }
+
+  if (isAuthenticated && !isNewUser) {
+    return <Redirect href="/(tabs)" />;
+  }
+
   return (
     <Stack>
-      <Stack.Screen
-        name="login"
-        options={{
-          title: 'Login',
-          headerShown: false,
-        }}
-      />
-      <Stack.Screen
-        name="register"
-        options={{
-          title: 'Register',
-          headerShown: false,
-        }}
-      />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="register" options={{ headerShown: false }} />
     </Stack>
   );
 }

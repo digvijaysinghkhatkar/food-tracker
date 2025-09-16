@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
 import { Text, TextInput, Button, ProgressBar, RadioButton, Checkbox, Chip } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import darkTheme, { gradients } from '../theme/darkTheme';
 import { GradientBackground, GradientButton } from '../components/ui/GradientComponents';
 import { useAuth } from '../contexts/AuthContext';
+
 
 // Common allergens list
 const COMMON_ALLERGENS = [
@@ -49,7 +50,14 @@ const REGIONAL_CUISINES = [
 
 const OnboardingScreen = () => {
   const router = useRouter();
-  const { user, updateUserProfile } = useAuth();
+  const { user, updateUserProfile, isAuthenticated } = useAuth();
+  
+  // Redirect to tabs if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/welcome');
+    }
+  }, [isAuthenticated, router]);
   
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,7 +73,7 @@ const OnboardingScreen = () => {
     allergies: [],
     customAllergies: '',
     dietaryPreference: '',
-    dietType: '',
+    dietType: [], // Changed to array for multiple selection
     regionalCuisines: [],
     goals: []
   });
@@ -94,6 +102,37 @@ const OnboardingScreen = () => {
         return { ...prev, allergies: allergies.filter(a => a !== allergen) };
       } else {
         return { ...prev, allergies: [...allergies, allergen] };
+      }
+    });
+  };
+  
+  // Handle diet type toggle with restrictions
+  const toggleDietType = (dietType) => {
+    setUserData(prev => {
+      const currentDietTypes = [...prev.dietType];
+      const restrictedPairs = [
+        ['vegetarian', 'vegan'],
+        ['non-vegetarian', 'vegan'],
+        ['eggetarian', 'vegan']
+      ];
+      
+      if (currentDietTypes.includes(dietType)) {
+        // Remove the diet type
+        return { ...prev, dietType: currentDietTypes.filter(d => d !== dietType) };
+      } else {
+        // Check for restrictions before adding
+        let newDietTypes = [...currentDietTypes, dietType];
+        
+        // Remove conflicting diet types
+        restrictedPairs.forEach(([type1, type2]) => {
+          if (dietType === type1 && newDietTypes.includes(type2)) {
+            newDietTypes = newDietTypes.filter(d => d !== type2);
+          } else if (dietType === type2 && newDietTypes.includes(type1)) {
+            newDietTypes = newDietTypes.filter(d => d !== type1);
+          }
+        });
+        
+        return { ...prev, dietType: newDietTypes };
       }
     });
   };
@@ -165,6 +204,9 @@ const OnboardingScreen = () => {
         dataToSubmit.allergies = [...dataToSubmit.allergies, ...customAllergiesList];
       }
       
+      console.log('Profile data to submit:', dataToSubmit);
+      
+      // Use the actual updateUserProfile function from AuthContext
       const success = await updateUserProfile(dataToSubmit);
       
       if (success) {
@@ -195,7 +237,7 @@ const OnboardingScreen = () => {
       case 0: // Basic Info
         return (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Basic Information</Text>
+            <Text style={styles.stepTitle}>Welcome to Balanced Bites!</Text>
             <Text style={styles.stepDescription}>Let's start with some basic information about you</Text>
             
             <TextInput
@@ -315,20 +357,19 @@ const OnboardingScreen = () => {
             <Text style={styles.stepTitle}>Dietary Preferences</Text>
             <Text style={styles.stepDescription}>Tell us about your eating habits</Text>
             
-            <Text style={styles.inputLabel}>Diet Type</Text>
-            <RadioButton.Group 
-              onValueChange={(value) => handleChange('dietType', value)} 
-              value={userData.dietType}
-            >
-              {DIET_TYPES.map((diet) => (
-                <View key={diet.value} style={styles.dietItem}>
-                  <RadioButton value={diet.value} />
-                  <Text>{diet.label}</Text>
-                </View>
-              ))}
-            </RadioButton.Group>
+            <Text style={[styles.inputLabel, { textAlign: 'center' }]}>Diet Type</Text>
+            <Text style={styles.stepDescription}>Select your preferred diet types (multiple allowed)</Text>
+            {DIET_TYPES.map((diet) => (
+              <View key={diet.value} style={styles.dietItem}>
+                <Checkbox
+                  status={userData.dietType.includes(diet.value) ? 'checked' : 'unchecked'}
+                  onPress={() => toggleDietType(diet.value)}
+                />
+                <Text>{diet.label}</Text>
+              </View>
+            ))}
             
-            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Regional Cuisine Preferences</Text>
+            <Text style={[styles.inputLabel, { marginTop: 16, textAlign: 'center' }]}>Regional Cuisine Preferences</Text>
             <Text style={styles.stepDescription}>Select your preferred regional cuisines</Text>
             
             <View style={styles.cuisinesContainer}>
@@ -345,7 +386,7 @@ const OnboardingScreen = () => {
               ))}
             </View>
             
-            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Allergies</Text>
+            <Text style={[styles.inputLabel, { marginTop: 16, textAlign: 'center' }]}>Allergies</Text>
             <Text style={styles.stepDescription}>Select any food allergies you have</Text>
             
             <View style={styles.allergensContainer}>
@@ -362,7 +403,7 @@ const OnboardingScreen = () => {
               ))}
             </View>
             
-            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Other Allergies</Text>
+            <Text style={[styles.inputLabel, { marginTop: 16, textAlign: 'center' }]}>Other Allergies</Text>
             <Text style={styles.stepDescription}>Enter any other allergies not listed above (leave blank if none)</Text>
             <TextInput
               label="Custom Allergies"
@@ -450,7 +491,11 @@ const OnboardingScreen = () => {
                   </TouchableOpacity>
                 </View>
                 <View style={styles.summaryContent}>
-                  <Text>Diet Type: {userData.dietType ? DIET_TYPES.find(d => d.value === userData.dietType)?.label : 'Not provided'}</Text>
+                  <Text>Diet Type: {
+                    userData.dietType.length > 0 ? 
+                    userData.dietType.map(type => DIET_TYPES.find(d => d.value === type)?.label).join(', ') : 
+                    'Not provided'
+                  }</Text>
                   <Text>Regional Preferences: {
                     userData.regionalCuisines.length > 0 ? 
                     userData.regionalCuisines.map(c => REGIONAL_CUISINES.find(rc => rc.value === c)?.label).join(', ') : 
@@ -549,7 +594,7 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 16, // Reverted back to original
   },
   progressBar: {
     height: 8,
@@ -563,6 +608,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     padding: 16,
+    paddingTop: 60, // Increased from 40 to 60 to bring form content down more
   },
   stepContainer: {
     marginBottom: 24,
@@ -572,11 +618,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
     color: darkTheme.colors.primary,
+    textAlign: 'center', // Center the step title
   },
   stepDescription: {
     fontSize: 16,
     color: darkTheme.colors.textSecondary,
     marginBottom: 24,
+    textAlign: 'center', // Center the step description
   },
   input: {
     marginBottom: 16,

@@ -1,27 +1,118 @@
 import { DarkTheme as NavigationDarkTheme } from '@react-navigation/native';
 import { MD3DarkTheme } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Platform } from 'react-native';
 
 // Custom dark theme with bluish-purple color scheme
-export const darkTheme = {
+const darkTheme = {
   ...MD3DarkTheme,
   ...NavigationDarkTheme,
   fonts: {
     ...MD3DarkTheme.fonts,
+    displayLarge: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '400',
+      fontSize: 57,
+      lineHeight: 64,
+    },
+    displayMedium: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '400',
+      fontSize: 45,
+      lineHeight: 52,
+    },
+    displaySmall: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '400',
+      fontSize: 36,
+      lineHeight: 44,
+    },
+    headlineLarge: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '600',
+      fontSize: 32,
+      lineHeight: 40,
+    },
+    headlineMedium: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '600',
+      fontSize: 28,
+      lineHeight: 36,
+    },
+    headlineSmall: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '600',
+      fontSize: 24,
+      lineHeight: 32,
+    },
+    titleLarge: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '500',
+      fontSize: 22,
+      lineHeight: 28,
+    },
+    titleMedium: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '500',
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    titleSmall: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '500',
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    bodyLarge: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '400',
+      fontSize: 16,
+      lineHeight: 24,
+    },
+    bodyMedium: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '400',
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    bodySmall: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '400',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    labelLarge: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '500',
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    labelMedium: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '500',
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    labelSmall: {
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
+      fontWeight: '500',
+      fontSize: 11,
+      lineHeight: 16,
+    },
     regular: {
-      fontFamily: 'System',
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
       fontWeight: '400',
     },
     medium: {
-      fontFamily: 'System',
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
       fontWeight: '500',
     },
     bold: {
-      fontFamily: 'System',
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
       fontWeight: '700',
     },
     heavy: {
-      fontFamily: 'System',
+      fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
       fontWeight: '900',
     },
   },
@@ -96,29 +187,16 @@ export const darkTheme = {
 };
 
 // Gradient configurations
-export const gradients = {
+const gradients = {
   primary: ['#4F74FF', '#7B68EE', '#9C7CF4'], // Blue to purple
   secondary: ['#3A5FE8', '#6A5ACD'], // Blue to slate blue
+  accent: ['#7B68EE', '#9C7CF4'], // Medium slate blue to purple
   button: ['#4F74FF', '#9C7CF4'], // Blue to purple
   card: ['#252525', '#1E1E1E'], // Dark gradient
   header: ['#252525', '#1E1E1E'], // Dark gradient for headers
   background: ['#121212', '#1A1A1A', '#252525'], // Dark background gradient
 };
 
-// Custom button with gradient
-export const GradientButton = ({ colors, start, end, ...props }) => {
-  return (
-    <LinearGradient
-      colors={colors || gradients.button}
-      start={start || { x: 0, y: 0 }}
-      end={end || { x: 1, y: 0 }}
-      style={{
-        borderRadius: darkTheme.roundness,
-        overflow: 'hidden',
-      }}
-      {...props}
-    />
-  );
-};
 
+export { darkTheme, gradients };
 export default darkTheme;

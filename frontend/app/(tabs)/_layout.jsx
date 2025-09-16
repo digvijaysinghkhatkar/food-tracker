@@ -1,23 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Tabs } from 'expo-router';
-import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useAuth } from '../../contexts/AuthContext';
 
 export default function TabsLayout() {
-  const { isAuthenticated, loading } = useAuth();
-  const router = useRouter();
-  
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.replace('/auth/login');
-    }
-  }, [isAuthenticated, loading]);
-  
-  if (loading || !isAuthenticated) {
-    return null;
-  }
   
   return (
     <Tabs
@@ -47,6 +32,15 @@ export default function TabsLayout() {
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="home" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="log-food"
+        options={{
+          title: 'Log Food',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="food-apple" color={color} size={size} />
           ),
         }}
       />
