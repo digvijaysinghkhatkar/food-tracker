@@ -19,6 +19,15 @@ const FoodLogSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  quantity: {
+    type: Number,
+    required: true
+  },
+  unit: {
+    type: String,
+    enum: ['grams', 'kg', 'pieces', 'cups', 'tablespoons', 'ml', 'liters'],
+    required: true
+  },
   calories: {
     type: Number
   },

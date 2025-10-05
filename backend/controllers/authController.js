@@ -35,6 +35,7 @@ exports.registerUser = async (req, res) => {
         name: user.name,
         email: user.email,
         token: generateToken(user._id),
+        isNewUser: true, // Add isNewUser flag for onboarding flow
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
@@ -44,6 +45,7 @@ exports.registerUser = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
@@ -118,7 +120,10 @@ exports.updateUserProfile = async (req, res) => {
         user.dietaryPreference = req.body.dietaryPreference;
       }
       if (req.body.dietType) {
-        user.dietType = req.body.dietType;
+        // Handle dietType as array - filter out empty values
+        user.dietType = Array.isArray(req.body.dietType) 
+          ? req.body.dietType.filter(type => type) 
+          : [req.body.dietType].filter(type => type);
       }
       if (req.body.regionalCuisines) {
         // Filter out any empty values
@@ -178,7 +183,10 @@ exports.updateUserPreferences = async (req, res) => {
         user.dietaryPreference = req.body.dietaryPreference;
       }
       if (req.body.dietType) {
-        user.dietType = req.body.dietType;
+        // Handle dietType as array - filter out empty values
+        user.dietType = Array.isArray(req.body.dietType) 
+          ? req.body.dietType.filter(type => type) 
+          : [req.body.dietType].filter(type => type);
       }
       if (req.body.regionalCuisines !== undefined) {
         // Filter out any empty values

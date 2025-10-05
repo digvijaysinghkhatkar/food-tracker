@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 
 // Route imports
 const authRoutes = require('./routes/authRoutes');
@@ -13,11 +15,31 @@ const foodLogRoutes = require('./routes/foodLogRoutes');
 dotenv.config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:8081",
+    methods: ["GET", "POST"]
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Make io available globally
+global.io = io;
+
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('📱 Frontend client connected:', socket.id);
+  
+  socket.on('disconnect', () => {
+    console.log('📱 Frontend client disconnected:', socket.id);
+  });
+});
 
 // MongoDB Connection
 mongoose
@@ -35,7 +57,7 @@ app.use('/api/food-log', foodLogRoutes);
 
 // Base Route
 app.get("/", (req, res) => {
-  res.send("Food Tracker API is running...");
+  res.send("Balanced Bites API is running...");
 });
 
 // Error handling middleware
@@ -45,7 +67,8 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🔗 Socket.io enabled for real-time updates`);
 });
 

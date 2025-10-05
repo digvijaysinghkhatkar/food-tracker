@@ -6,12 +6,14 @@ const {
   getDietPlanById,
   createDietPlan,
   updateDietPlan,
-  deleteDietPlan
+  deleteDietPlan,
+  calculateNutritionGoals
 } = require('../controllers/dietPlanController');
 const { protect } = require('../middleware/auth');
 
 // All routes are protected
 router.post('/generate', protect, generateDietPlan);
+router.post('/calculate-nutrition-goals', protect, calculateNutritionGoals);
 router.post('/', protect, createDietPlan);
 router.get('/', protect, getDietPlan);
 router.get('/:id', protect, getDietPlanById);

@@ -6,7 +6,8 @@ const {
   getFoodLogById,
   updateFoodLog,
   deleteFoodLog,
-  getTodayFoodLogs
+  getTodayFoodLogs,
+  getNutritionSummary
 } = require('../controllers/foodLogController');
 const { protect } = require('../middleware/auth');
 
@@ -14,6 +15,7 @@ const { protect } = require('../middleware/auth');
 router.post('/', protect, logFood);
 router.get('/', protect, getFoodLogs);
 router.get('/today', protect, getTodayFoodLogs);
+router.get('/nutrition-summary', protect, getNutritionSummary);
 router.get('/:id', protect, getFoodLogById);
 router.put('/:id', protect, updateFoodLog);
 router.delete('/:id', protect, deleteFoodLog);

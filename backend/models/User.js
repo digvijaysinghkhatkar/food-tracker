@@ -39,10 +39,10 @@ const UserSchema = new mongoose.Schema({
     type: String,
     enum: ['vegetarian', 'vegan', 'non-vegetarian', 'pescatarian', 'other']
   },
-  dietType: {
+  dietType: [{
     type: String,
     enum: ['vegetarian', 'non-vegetarian', 'vegan', 'eggetarian', 'pescatarian']
-  },
+  }],
   regionalCuisines: [{
     type: String,
     enum: ['north-indian', 'south-indian', 'east-indian', 'west-indian', 'punjabi', 'gujarati', 'bengali', 'maharashtrian', 'tamil', 'kerala', 'andhra', 'hyderabadi', 'kashmiri', 'international']
@@ -50,15 +50,33 @@ const UserSchema = new mongoose.Schema({
   goals: [{
     type: String
   }],
+  dailyNutritionGoals: {
+    calories: {
+      type: Number,
+      default: 2000
+    },
+    protein: {
+      type: Number,
+      default: 150
+    },
+    carbs: {
+      type: Number,
+      default: 250
+    },
+    fat: {
+      type: Number,
+      default: 65
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now
   }
 });
 
-// Hash password before saving
+// Hash password before saving (only if password is provided)
 UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
   
