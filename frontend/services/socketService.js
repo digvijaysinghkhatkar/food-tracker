@@ -1,16 +1,18 @@
 import { io } from 'socket.io-client';
 import { Platform } from 'react-native';
+import { BASE_URL } from '../constants';
 
 class SocketService {
   socket = null;
   
   connect() {
-    // Use localhost for development, adjust for production
-    const serverURL = Platform.OS === 'web' 
-      ? 'http://localhost:5000' 
-      : 'http://localhost:5000';
+    // Use environment variable for server URL
+    if (!BASE_URL) {
+      console.error(' BASE_URL environment variable is not defined');
+      return null;
+    }
     
-    this.socket = io(serverURL, {
+    this.socket = io(BASE_URL, {
       transports: ['websocket'],
       autoConnect: true,
     });
