@@ -73,7 +73,6 @@ const HeroCarousel = () => {
   };
 
   const handleScrollEndDrag = () => {
-    // Restart auto-scroll after user stops dragging (with delay)
     setTimeout(() => {
       startAutoScroll();
     }, 2000); // 2 second delay before restarting auto-scroll
@@ -110,24 +109,6 @@ const HeroCarousel = () => {
           </View>
         ))}
       </ScrollView>
-      
-      {/* Pagination dots */}
-      <View style={styles.pagination}>
-        {carouselData.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              { 
-                backgroundColor: index === currentIndex 
-                  ? darkTheme.colors.primary 
-                  : darkTheme.colors.surfaceVariant,
-                opacity: index === currentIndex ? 1 : 0.4 
-              }
-            ]}
-          />
-        ))}
-      </View>
     </View>
   );
 };
@@ -178,22 +159,6 @@ const styles = StyleSheet.create({
     borderRadius: 24, // Rounded corners
     maxWidth: 340,
     maxHeight: 340,
-  },
-  pagination: {
-    position: 'absolute',
-    bottom: -30, // Move dots below the carousel container
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginHorizontal: 4,
   },
 });
 

@@ -24,7 +24,7 @@ export default function WelcomeScreen() {
     <GradientBackground colors={gradients.background} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="light" />
-        
+
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.welcomeText}>Welcome to</Text>
@@ -38,8 +38,8 @@ export default function WelcomeScreen() {
 
         {/* Call to Action */}
         <View style={styles.ctaSection}>
-          <Text style={styles.ctaTitle}>Ready for some wins? Start</Text>
-          <Text style={styles.ctaSubtitle}>tracking, it's easy!</Text>
+          <Text style={styles.ctaTitle}>Ready for some wins?</Text>
+          <Text style={styles.ctaSubtitle}>Start tracking, it's easy!</Text>
         </View>
 
         {/* Action Buttons */}
@@ -72,28 +72,27 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     paddingHorizontal: 20,
+    justifyContent: 'space-between',
   },
   header: {
     alignItems: 'center',
-    marginTop: 80, // Moved down further from 60 to 80
+    marginTop: 40,
     marginBottom: 20,
   },
   welcomeText: {
-    fontSize: 22, // Increased from 18 to 22
+    fontSize: 20,
     color: darkTheme.colors.textSecondary,
-    marginBottom: 5,
-    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
-    fontWeight: '700', // Made bold (changed from '400')
+    marginBottom: 8,
+    fontWeight: '400',
   },
   appName: {
-    fontSize: 36, // Increased from 32 to 36
-    fontWeight: '700',
+    fontSize: 32,
+    fontWeight: 'bold',
     color: darkTheme.colors.primary,
-    fontFamily: Platform.OS === 'ios' ? 'San Francisco Display' : 'sans-serif',
     letterSpacing: -0.5,
   },
   heroSection: {
-    flex: 1,
+    flex: 0.6,
     justifyContent: 'center',
     alignItems: 'center',
     marginVertical: 20,
@@ -102,30 +101,39 @@ const styles = StyleSheet.create({
   },
   ctaSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
+    paddingHorizontal: 20,
   },
   ctaTitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '600',
     color: darkTheme.colors.onSurface,
     textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'San Francisco Display' : 'sans-serif',
-    letterSpacing: -0.3,
+    marginBottom: 4,
+    lineHeight: 28,
   },
   ctaSubtitle: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '600',
     color: darkTheme.colors.onSurface,
     textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'San Francisco Display' : 'sans-serif',
-    letterSpacing: -0.3,
+    lineHeight: 28,
   },
   buttonContainer: {
     marginBottom: 20,
+    paddingHorizontal: 10,
   },
   signUpButton: {
     marginBottom: 16,
     borderRadius: 25,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
     overflow: 'hidden',
   },
   buttonGradient: {
@@ -137,24 +145,25 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',
-    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
     letterSpacing: -0.2,
   },
   loginButton: {
     paddingVertical: 16,
     alignItems: 'center',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: darkTheme.colors.primary,
+    borderRadius: 25,
   },
   loginButtonText: {
     color: darkTheme.colors.primary,
     fontSize: 18,
     fontWeight: '500',
-    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
   },
   version: {
     textAlign: 'center',
     color: darkTheme.colors.textSecondary,
     fontSize: 12,
     marginBottom: 10,
-    fontFamily: Platform.OS === 'ios' ? 'San Francisco' : 'sans-serif',
   },
 });

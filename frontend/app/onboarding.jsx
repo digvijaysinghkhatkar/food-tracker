@@ -65,7 +65,7 @@ const OnboardingScreen = () => {
   
   // User data state
   const [userData, setUserData] = useState({
-    age: '',
+    age: 18,
     weight: '',
     height: '',
     gender: '',
@@ -240,14 +240,29 @@ const OnboardingScreen = () => {
             <Text style={styles.stepTitle}>Welcome to Balanced Bites!</Text>
             <Text style={styles.stepDescription}>Let's start with some basic information about you</Text>
             
-            <TextInput
-              label="Age"
-              value={userData.age}
-              onChangeText={(value) => handleChange('age', value)}
-              style={styles.input}
-              mode="outlined"
-              keyboardType="numeric"
-            />
+            <Text style={styles.inputLabel}>Age: {userData.age} years</Text>
+            <View style={styles.ageInputContainer}>
+              <TouchableOpacity
+                style={[styles.ageButton, userData.age <= 0 && styles.ageButtonDisabled]}
+                onPress={() => handleChange('age', Math.max(0, userData.age - 1))}
+                disabled={userData.age <= 0}
+              >
+                <Text style={[styles.ageButtonText, userData.age <= 0 && styles.ageButtonTextDisabled]}>-</Text>
+              </TouchableOpacity>
+
+              <View style={styles.ageDisplay}>
+                <Text style={styles.ageText}>{userData.age}</Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.ageButton, userData.age >= 100 && styles.ageButtonDisabled]}
+                onPress={() => handleChange('age', Math.min(100, userData.age + 1))}
+                disabled={userData.age >= 100}
+              >
+                <Text style={[styles.ageButtonText, userData.age >= 100 && styles.ageButtonTextDisabled]}>+</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.ageRangeText}>Age range: 0-100 years</Text>
             
             <Text style={styles.inputLabel}>Gender</Text>
             <RadioButton.Group 
@@ -629,6 +644,66 @@ const styles = StyleSheet.create({
   input: {
     marginBottom: 16,
     backgroundColor: darkTheme.colors.surfaceVariant,
+  },
+  slider: {
+    marginBottom: 16,
+  },
+  sliderContainer: {
+    marginBottom: 16,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  sliderLabel: {
+    fontSize: 12,
+    color: darkTheme.colors.textSecondary,
+  },
+  ageInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  ageButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: darkTheme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 20,
+  },
+  ageButtonDisabled: {
+    backgroundColor: darkTheme.colors.surfaceVariant,
+  },
+  ageButtonText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: darkTheme.colors.onPrimary,
+  },
+  ageButtonTextDisabled: {
+    color: darkTheme.colors.textSecondary,
+  },
+  ageDisplay: {
+    width: 80,
+    height: 50,
+    backgroundColor: darkTheme.colors.surfaceVariant,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ageText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: darkTheme.colors.text,
+  },
+  ageRangeText: {
+    fontSize: 12,
+    color: darkTheme.colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 16,
   },
   inputLabel: {
     fontSize: 16,

@@ -177,24 +177,54 @@ exports.updateUserPreferences = async (req, res) => {
       if (req.body.gender !== undefined) user.gender = req.body.gender;
       if (req.body.activityLevel !== undefined) user.activityLevel = req.body.activityLevel;
       if (req.body.allergies !== undefined) user.allergies = req.body.allergies;
-      
+
       // Handle enum fields - only set if not empty string
       if (req.body.dietaryPreference) {
         user.dietaryPreference = req.body.dietaryPreference;
       }
       if (req.body.dietType) {
         // Handle dietType as array - filter out empty values
-        user.dietType = Array.isArray(req.body.dietType) 
-          ? req.body.dietType.filter(type => type) 
+        user.dietType = Array.isArray(req.body.dietType)
+          ? req.body.dietType.filter(type => type)
           : [req.body.dietType].filter(type => type);
       }
       if (req.body.regionalCuisines !== undefined) {
         // Filter out any empty values
-        user.regionalCuisines = Array.isArray(req.body.regionalCuisines) 
-          ? req.body.regionalCuisines.filter(cuisine => cuisine) 
+        user.regionalCuisines = Array.isArray(req.body.regionalCuisines)
+          ? req.body.regionalCuisines.filter(cuisine => cuisine)
           : [];
       }
       if (req.body.goals !== undefined) user.goals = req.body.goals;
+
+      // Calculate and set daily nutrition goals if user has required data
+      if (user.age && user.weight && user.height && user.gender && user.activityLevel) {
+        // Harris-Benedict BMR calculation
+        let bmr;
+        if (user.gender === 'male') {
+          bmr = 88.362 + (13.397 * user.weight) + (4.799 * user.height) - (5.677 * user.age);
+        } else {
+          bmr = 447.593 + (9.247 * user.weight) + (3.098 * user.height) - (4.330 * user.age);
+        }
+
+        // Activity level multipliers
+        const activityMultipliers = {
+          'sedentary': 1.2,
+          'light': 1.375,
+          'moderate': 1.55,
+          'active': 1.725,
+          'very active': 1.9
+        };
+
+        const tdee = Math.round(bmr * (activityMultipliers[user.activityLevel] || 1.55));
+
+        // Set nutrition goals
+        user.dailyNutritionGoals = {
+          calories: tdee,
+          protein: Math.round(user.weight * 1.6), // 1.6g per kg body weight
+          carbs: Math.round(tdee * 0.45 / 4), // 45% of calories from carbs
+          fat: Math.round(tdee * 0.25 / 9) // 25% of calories from fat
+        };
+      }
 
       const updatedUser = await user.save();
 
@@ -212,6 +242,7 @@ exports.updateUserPreferences = async (req, res) => {
         dietType: updatedUser.dietType,
         regionalCuisines: updatedUser.regionalCuisines,
         goals: updatedUser.goals,
+        dailyNutritionGoals: updatedUser.dailyNutritionGoals,
       });
     } else {
       res.status(404).json({ message: 'User not found' });
