@@ -29,7 +29,7 @@ const calculateNutrition = async (foodName, quantity, unit) => {
     If the food item is not recognized, provide reasonable estimates based on similar foods.
     Return ONLY the JSON object, no additional text.`;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();
     
