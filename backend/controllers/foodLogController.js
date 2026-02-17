@@ -92,33 +92,26 @@ exports.logFood = async (req, res) => {
       });
     }
 
-    let nutritionData = { calories, protein, carbs, fat };
-
-    // If nutrition data is not provided, calculate using Gemini API
-    if (!calories && !protein && !carbs && !fat) {
-      console.log(`🔍 Calculating nutrition for ${quantity} ${unit} of ${foodName}`);
-      nutritionData = await calculateNutrition(foodName, quantity, unit);
-      console.log('📊 Calculated nutrition:', nutritionData);
-    }
-
+    // Save food log immediately (even without nutrition data)
     const newFoodLog = new FoodLog({
       user: req.user._id,
       mealType,
       foodName,
       quantity,
       unit,
-      calories: nutritionData.calories,
-      protein: nutritionData.protein,
-      carbs: nutritionData.carbs,
-      fat: nutritionData.fat,
+      calories: calories || 0,
+      protein: protein || 0,
+      carbs: carbs || 0,
+      fat: fat || 0,
       notes,
-      date: date || Date.now()
+      date: date || Date.now(),
+      nutritionStatus: (calories || protein || carbs || fat) ? 'completed' : 'calculating'
     });
 
     const savedLog = await newFoodLog.save();
     console.log('✅ Food log saved successfully');
     
-    // Emit socket event for real-time updates
+    // Emit socket event for food log created
     if (global.io) {
       global.io.emit('food-log-created', {
         userId: req.user._id,
@@ -126,7 +119,59 @@ exports.logFood = async (req, res) => {
       });
     }
     
+    // Return immediately to user
     res.status(201).json(savedLog);
+
+    // If nutrition data is not provided, calculate asynchronously
+    if (!calories && !protein && !carbs && !fat) {
+      // Run AI calculation in background
+      setImmediate(async () => {
+        try {
+          console.log(`🤖 AI calculating nutrition for ${quantity} ${unit} of ${foodName}...`);
+          
+          // Emit calculating event
+          if (global.io) {
+            global.io.emit('nutrition-calculating', {
+              userId: req.user._id,
+              foodLogId: savedLog._id,
+              foodName: savedLog.foodName
+            });
+          }
+
+          const nutritionData = await calculateNutrition(foodName, quantity, unit);
+          console.log('📊 AI calculated nutrition:', nutritionData);
+
+          // Update the food log with calculated nutrition
+          savedLog.calories = nutritionData.calories;
+          savedLog.protein = nutritionData.protein;
+          savedLog.carbs = nutritionData.carbs;
+          savedLog.fat = nutritionData.fat;
+          savedLog.nutritionStatus = 'completed';
+          await savedLog.save();
+
+          // Emit completion event
+          if (global.io) {
+            global.io.emit('nutrition-calculated', {
+              userId: req.user._id,
+              foodLogId: savedLog._id,
+              foodLog: savedLog
+            });
+          }
+        } catch (error) {
+          console.error('❌ Error calculating nutrition:', error);
+          savedLog.nutritionStatus = 'failed';
+          await savedLog.save();
+          
+          if (global.io) {
+            global.io.emit('nutrition-calculation-failed', {
+              userId: req.user._id,
+              foodLogId: savedLog._id,
+              error: error.message
+            });
+          }
+        }
+      });
+    }
   } catch (error) {
     console.error('❌ Error logging food:', error);
     res.status(500).json({ message: 'Server error' });

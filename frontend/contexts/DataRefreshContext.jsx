@@ -23,6 +23,9 @@ export const DataRefreshProvider = ({ children }) => {
     nutritionData: 0,
   });
 
+  const [calculatingNutrition, setCalculatingNutrition] = useState(false);
+  const [calculatingFoods, setCalculatingFoods] = useState([]);
+
   const triggerRefresh = useCallback((dataType) => {
     console.log(`🔄 Triggering refresh for: ${dataType}`);
     setRefreshTriggers(prev => ({
@@ -71,11 +74,39 @@ export const DataRefreshProvider = ({ children }) => {
       }
     };
 
+    // Listen for nutrition calculation events
+    const handleNutritionCalculating = (data) => {
+      if (data.userId === user._id) {
+        console.log('🤖 AI calculating nutrition for:', data.foodName);
+        setCalculatingNutrition(true);
+        setCalculatingFoods(prev => [...prev, { id: data.foodLogId, name: data.foodName }]);
+      }
+    };
+
+    const handleNutritionCalculated = (data) => {
+      if (data.userId === user._id) {
+        console.log('✅ AI finished calculating nutrition');
+        setCalculatingFoods(prev => prev.filter(f => f.id !== data.foodLogId));
+        triggerRefresh('foodLog');
+        triggerRefresh('nutritionData');
+      }
+    };
+
+    const handleNutritionCalculationFailed = (data) => {
+      if (data.userId === user._id) {
+        console.log('❌ AI nutrition calculation failed:', data.error);
+        setCalculatingFoods(prev => prev.filter(f => f.id !== data.foodLogId));
+      }
+    };
+
     // Register event listeners
     socketService.on('diet-plan-created', handleDietPlanCreated);
     socketService.on('diet-plan-updated', handleDietPlanUpdated);
     socketService.on('nutrition-goals-updated', handleNutritionGoalsUpdated);
     socketService.on('food-log-created', handleFoodLogCreated);
+    socketService.on('nutrition-calculating', handleNutritionCalculating);
+    socketService.on('nutrition-calculated', handleNutritionCalculated);
+    socketService.on('nutrition-calculation-failed', handleNutritionCalculationFailed);
 
     // Cleanup on unmount
     return () => {
@@ -84,12 +115,22 @@ export const DataRefreshProvider = ({ children }) => {
       socketService.off('diet-plan-updated', handleDietPlanUpdated);
       socketService.off('nutrition-goals-updated', handleNutritionGoalsUpdated);
       socketService.off('food-log-created', handleFoodLogCreated);
+      socketService.off('nutrition-calculating', handleNutritionCalculating);
+      socketService.off('nutrition-calculated', handleNutritionCalculated);
+      socketService.off('nutrition-calculation-failed', handleNutritionCalculationFailed);
     };
   }, [user, triggerRefresh]);
+
+  // Update calculatingNutrition based on calculatingFoods
+  useEffect(() => {
+    setCalculatingNutrition(calculatingFoods.length > 0);
+  }, [calculatingFoods]);
 
   const value = {
     refreshTriggers,
     triggerRefresh,
+    calculatingNutrition,
+    calculatingFoods,
   };
 
   return (

@@ -16,7 +16,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function HomeScreen() {
   const router = useRouter();
   const { user, token, isAuthenticated, loading: authLoading } = useAuth();
-  const { refreshTriggers } = useDataRefresh();
+  const { refreshTriggers, calculatingNutrition, calculatingFoods } = useDataRefresh();
   const [loading, setLoading] = useState(true);
   const [nutritionData, setNutritionData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -129,6 +129,28 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         </Animated.View>
+
+        {/* AI Calculating Banner */}
+        {calculatingNutrition && (
+          <Animated.View style={[styles.calculatingBanner, { opacity: fadeAnim }]}>
+            <LinearGradient
+              colors={['rgba(156, 124, 244, 0.15)', 'rgba(79, 116, 255, 0.15)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.calculatingGradient}
+            >
+              <View style={styles.calculatingContent}>
+                <ActivityIndicator size="small" color={darkTheme.colors.primary} />
+                <View style={styles.calculatingTextContainer}>
+                  <Text style={styles.calculatingTitle}>🤖 AI Calculating Nutrition</Text>
+                  <Text style={styles.calculatingSubtitle}>
+                    {calculatingFoods.length} item{calculatingFoods.length !== 1 ? 's' : ''} being analyzed...
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        )}
 
         {/* Date Bar */}
         <Animated.View style={[styles.dateBar, { opacity: fadeAnim }]}>
@@ -738,6 +760,36 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+
+  // AI Calculating Banner
+  calculatingBanner: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  calculatingGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  calculatingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  calculatingTextContainer: {
+    flex: 1,
+  },
+  calculatingTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: darkTheme.colors.primary,
+    marginBottom: 2,
+  },
+  calculatingSubtitle: {
+    fontSize: 12,
+    color: darkTheme.colors.textSecondary,
   },
 
   // Food Items

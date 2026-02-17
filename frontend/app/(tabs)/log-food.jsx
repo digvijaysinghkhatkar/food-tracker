@@ -17,8 +17,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDataRefresh } from '../../contexts/DataRefreshContext';
 import { API_URL } from '../../constants';
 import darkTheme, { gradients } from '../../theme/darkTheme';
 import { GradientBackground, GradientButton } from '../../components/ui/GradientComponents';
@@ -45,6 +47,7 @@ const UNITS = [
 export default function LogFoodScreen() {
   const router = useRouter();
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const { calculatingNutrition, calculatingFoods } = useDataRefresh();
   
   // Redirect to welcome page if not authenticated (but wait for auth loading to complete)
   useEffect(() => {
@@ -177,7 +180,7 @@ export default function LogFoodScreen() {
       
       Alert.alert(
         'Success!', 
-        `${foodItems.length} food item(s) have been logged with calculated nutrition information.`,
+        `${foodItems.length} food item(s) logged! AI is calculating nutrition now.`,
         [
           {
             text: 'Add More',
@@ -185,7 +188,10 @@ export default function LogFoodScreen() {
           },
           {
             text: 'View Dashboard',
-            onPress: () => router.push('/(tabs)'),
+            onPress: () => {
+              setFoodItems([]);
+              router.push('/(tabs)');
+            },
             style: 'default'
           }
         ]
@@ -244,6 +250,28 @@ export default function LogFoodScreen() {
             Add multiple food items and we'll calculate nutrition automatically
           </Text>
 
+          {/* AI Calculating Banner */}
+          {calculatingNutrition && (
+            <View style={styles.calculatingBanner}>
+              <LinearGradient
+                colors={['rgba(156, 124, 244, 0.15)', 'rgba(79, 116, 255, 0.15)']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.calculatingGradient}
+              >
+                <View style={styles.calculatingContent}>
+                  <ActivityIndicator size="small" color={darkTheme.colors.primary} />
+                  <View style={styles.calculatingTextContainer}>
+                    <Text style={styles.calculatingTitle}>🤖 AI Calculating Nutrition</Text>
+                    <Text style={styles.calculatingSubtitle}>
+                      {calculatingFoods.length} item{calculatingFoods.length !== 1 ? 's' : ''} being analyzed...
+                    </Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </View>
+          )}
+
           {/* Food Items List */}
           {foodItems.length > 0 && (
             <View style={styles.foodItemsList}>
@@ -293,7 +321,7 @@ export default function LogFoodScreen() {
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color={darkTheme.colors.primary} />
               <Text style={styles.loadingText}>
-                Using AI to calculate nutritional information...
+                Saving food items...
               </Text>
             </View>
           )}
@@ -481,8 +509,33 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
+  },  calculatingBanner: {
+    marginBottom: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  sectionTitle: {
+  calculatingGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  calculatingContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  calculatingTextContainer: {
+    flex: 1,
+  },
+  calculatingTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: darkTheme.colors.primary,
+    marginBottom: 2,
+  },
+  calculatingSubtitle: {
+    fontSize: 12,
+    color: darkTheme.colors.textSecondary,
+  },  sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: darkTheme.colors.primary,

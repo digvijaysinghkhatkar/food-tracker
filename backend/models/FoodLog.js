@@ -42,6 +42,11 @@ const FoodLogSchema = new mongoose.Schema({
   },
   notes: {
     type: String
+  },
+  nutritionStatus: {
+    type: String,
+    enum: ['calculating', 'completed', 'failed'],
+    default: 'calculating'
   }
 });
 
