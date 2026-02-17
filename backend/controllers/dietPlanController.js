@@ -77,7 +77,7 @@ module.exports = {
           Ensure the macronutrients add up correctly (protein: 4 cal/g, carbs: 4 cal/g, fat: 9 cal/g).
           Return ONLY valid JSON.`.trim();
 
-          const nutritionModel = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+          const nutritionModel = genAI.getGenerativeModel({ model: "gemini-pro" });
           const nutritionResult = await nutritionModel.generateContent(nutritionPrompt);
           const nutritionText = nutritionResult.response.text();
           
@@ -168,7 +168,7 @@ module.exports = {
         Return ONLY valid JSON.`.trim();
 
         console.log("🤖 Sending request to Gemini API");
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         console.log("✅ Received response from Gemini API");
@@ -417,7 +417,7 @@ module.exports = {
         Return ONLY valid JSON.`.trim();
 
         console.log("🤖 Sending nutrition goals request to Gemini API");
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
         const result = await model.generateContent(prompt);
         const text = result.response.text();
         console.log("✅ Received nutrition goals response from Gemini API");
