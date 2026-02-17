@@ -117,6 +117,15 @@ exports.logFood = async (req, res) => {
 
     const savedLog = await newFoodLog.save();
     console.log('✅ Food log saved successfully');
+    
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('food-log-created', {
+        userId: req.user._id,
+        foodLog: savedLog
+      });
+    }
+    
     res.status(201).json(savedLog);
   } catch (error) {
     console.error('❌ Error logging food:', error);

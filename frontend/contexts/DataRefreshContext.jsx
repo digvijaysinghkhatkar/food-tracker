@@ -20,6 +20,7 @@ export const DataRefreshProvider = ({ children }) => {
     dietPlan: 0,
     nutritionGoals: 0,
     foodLog: 0,
+    nutritionData: 0,
   });
 
   const triggerRefresh = useCallback((dataType) => {
@@ -61,10 +62,20 @@ export const DataRefreshProvider = ({ children }) => {
       }
     };
 
+    // Listen for food log events
+    const handleFoodLogCreated = (data) => {
+      if (data.userId === user._id) {
+        console.log('📱 Food log created - triggering refresh');
+        triggerRefresh('foodLog');
+        triggerRefresh('nutritionData');
+      }
+    };
+
     // Register event listeners
     socketService.on('diet-plan-created', handleDietPlanCreated);
     socketService.on('diet-plan-updated', handleDietPlanUpdated);
     socketService.on('nutrition-goals-updated', handleNutritionGoalsUpdated);
+    socketService.on('food-log-created', handleFoodLogCreated);
 
     // Cleanup on unmount
     return () => {
@@ -72,6 +83,7 @@ export const DataRefreshProvider = ({ children }) => {
       socketService.off('diet-plan-created', handleDietPlanCreated);
       socketService.off('diet-plan-updated', handleDietPlanUpdated);
       socketService.off('nutrition-goals-updated', handleNutritionGoalsUpdated);
+      socketService.off('food-log-created', handleFoodLogCreated);
     };
   }, [user, triggerRefresh]);
 

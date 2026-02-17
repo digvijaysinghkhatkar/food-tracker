@@ -360,10 +360,22 @@ module.exports = {
   calculateNutritionGoals: async (req, res) => {
     try {
       console.log('🎯 Calculating AI-powered nutrition goals...');
+      console.log('🔑 API Key exists:', !!process.env.GEMINI_API_KEY);
+      console.log('🔑 API Key first 10 chars:', process.env.GEMINI_API_KEY?.substring(0, 10));
       
       const user = await User.findById(req.user._id);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
+      }
+
+      console.log('👤 User found:', user.email);
+
+      // Check if API key is configured
+      if (!process.env.GEMINI_API_KEY) {
+        console.error('❌ GEMINI_API_KEY is not configured');
+        return res.status(500).json({ 
+          message: "Server configuration error: Gemini API key is missing. Please contact the administrator."
+        });
       }
 
       let nutritionGoals;
@@ -423,7 +435,8 @@ module.exports = {
         }
       } catch (apiError) {
         console.error("❌ Gemini API error:", apiError);
-        throw new Error("Failed to calculate nutrition goals");
+        console.error("❌ Error details:", apiError.message || apiError);
+        throw new Error(`Failed to calculate nutrition goals: ${apiError.message || 'Unknown API error'}`);
       }
 
       // Update user's daily nutrition goals
@@ -456,7 +469,11 @@ module.exports = {
       });
     } catch (error) {
       console.error('Error calculating nutrition goals:', error);
-      res.status(500).json({ message: "Server error" });
+      console.error('Error stack:', error.stack);
+      res.status(500).json({ 
+        message: error.message || "Server error",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   },
 };

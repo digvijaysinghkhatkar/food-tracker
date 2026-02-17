@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, ScrollView, Alert } from 'react-native';
+import { StyleSheet, View, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { Text, Card, Button, TextInput, ActivityIndicator, Divider, SegmentedButtons } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { GradientBackground } from '../../components/ui/GradientComponents';
+import StockImagePlaceholder from '../../components/ui/StockImagePlaceholder';
 import darkTheme, { gradients } from '../../theme/darkTheme';
 import { API_URL } from '../../constants';
 import axios from 'axios';
@@ -23,7 +26,6 @@ export default function ProfileScreen() {
   }, [isAuthenticated, authLoading, router]);
   
   const [loading, setLoading] = useState(false);
-  const [calculatingNutrition, setCalculatingNutrition] = useState(false);
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -103,56 +105,6 @@ export default function ProfileScreen() {
       setLoading(false);
     }
   };
-
-  // Calculate AI-powered nutrition goals
-  const calculateAINutritionGoals = async () => {
-    try {
-      setCalculatingNutrition(true);
-      
-      // Check if user has basic required info
-      if (!user.age || !user.weight || !user.height || !user.gender || !user.activityLevel) {
-        Alert.alert(
-          'Missing Information', 
-          'Please complete your profile (age, weight, height, gender, activity level) before calculating nutrition goals.'
-        );
-        return;
-      }
-      
-      const response = await axios.post(
-        `${API_URL}/diet-plan/calculate-nutrition-goals`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      
-      console.log('Nutrition goals calculated:', response.data);
-      
-      Alert.alert(
-        'Success!', 
-        `Your personalized nutrition goals have been calculated and updated in your profile!\n\n` +
-        `Daily Goals:\n` +
-        `• Calories: ${response.data.nutritionGoals?.calories || 'N/A'} kcal\n` +
-        `• Protein: ${response.data.nutritionGoals?.protein || 'N/A'} g\n` +
-        `• Carbs: ${response.data.nutritionGoals?.carbs || 'N/A'} g\n` +
-        `• Fat: ${response.data.nutritionGoals?.fat || 'N/A'} g`
-      );
-      
-      // Refresh user data to show updated nutrition goals
-      if (fetchUserProfile) {
-        await fetchUserProfile();
-      }
-      
-    } catch (error) {
-      console.error('Error calculating nutrition goals:', error);
-      Alert.alert(
-        'Error', 
-        error.response?.data?.message || 'Failed to calculate nutrition goals. Please try again.'
-      );
-    } finally {
-      setCalculatingNutrition(false);
-    }
-  };
   
   // Calculate BMI
   const calculateBMI = () => {
@@ -222,27 +174,47 @@ export default function ProfileScreen() {
   
   return (
     <GradientBackground colors={gradients.background} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-      <Card style={styles.card}>
-        <Card.Content>
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.name}>
-                {userData.name || user?.name || 'User'}
-              </Text>
-              <Text style={styles.email}>
-                {userData.email || user?.email || 'No email'}
-              </Text>
-            </View>
-            <Button 
-              mode="outlined" 
-              onPress={handleLogout}
-            >
-              Logout
-            </Button>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        
+        {/* Profile Header */}
+        <View style={styles.profileHeader}>
+          <View style={styles.profileImageContainer}>
+            <StockImagePlaceholder type="profile" size={100} />
+            <TouchableOpacity style={styles.editImageButton}>
+              <MaterialCommunityIcons name="camera" size={20} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
-        </Card.Content>
-      </Card>
+          
+          <Text style={styles.profileName}>
+            {userData.name || user?.name || 'User'}
+          </Text>
+          <Text style={styles.profileEmail}>
+            {userData.email || user?.email || 'No email'}
+          </Text>
+          
+          {/* Quick Stats */}
+          {bmi && (
+            <View style={styles.quickStatsContainer}>
+              <View style={styles.quickStatItem}>
+                <MaterialCommunityIcons name="scale-bathroom" size={24} color={darkTheme.colors.primary} />
+                <Text style={styles.quickStatValue}>{bmi}</Text>
+                <Text style={styles.quickStatLabel}>BMI</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.quickStatItem}>
+                <MaterialCommunityIcons name="weight-kilogram" size={24} color={darkTheme.colors.primary} />
+                <Text style={styles.quickStatValue}>{userData.weight || '--'}</Text>
+                <Text style={styles.quickStatLabel}>kg</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.quickStatItem}>
+                <MaterialCommunityIcons name="human-male-height" size={24} color={darkTheme.colors.primary} />
+                <Text style={styles.quickStatValue}>{userData.height || '--'}</Text>
+                <Text style={styles.quickStatLabel}>cm</Text>
+              </View>
+            </View>
+          )}
+        </View>
       
       <Card style={styles.card}>
         <Card.Content>
@@ -482,25 +454,21 @@ export default function ProfileScreen() {
                 <Text style={styles.metricSubtext}>Estimated</Text>
               </View>
             </View>
-
-
-            <Button
-              mode="contained"
-              onPress={calculateAINutritionGoals}
-              style={styles.aiButton}
-              loading={calculatingNutrition}
-              disabled={calculatingNutrition}
-              icon="robot"
-            >
-              {calculatingNutrition ? 'Calculating...' : 'Calculate AI Nutrition Goals'}
-            </Button>
-            
-            <Text style={styles.disclaimer}>
-              Balanced Bites AI calculations are based on your profile information. Consult with a healthcare professional for personalized advice.
-            </Text>
           </Card.Content>
         </Card>
       )}
+      
+      {/* Logout Button */}
+      {!isEditing && (
+        <TouchableOpacity 
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <MaterialCommunityIcons name="logout" size={20} color="#FF6B6B" />
+          <Text style={styles.logoutButtonText}>Logout</Text>
+        </TouchableOpacity>
+      )}
+      
       </ScrollView>
     </GradientBackground>
   );
@@ -512,6 +480,69 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 24,
+  },
+  profileHeader: {
+    alignItems: 'center',
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+  },
+  profileImageContainer: {
+    position: 'relative',
+    marginBottom: 16,
+  },
+  editImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: darkTheme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: darkTheme.colors.background,
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: darkTheme.colors.onBackground,
+    marginBottom: 4,
+  },
+  profileEmail: {
+    fontSize: 14,
+    color: darkTheme.colors.textSecondary,
+    marginBottom: 20,
+  },
+  quickStatsContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  quickStatItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  quickStatValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: darkTheme.colors.onBackground,
+    marginTop: 8,
+  },
+  quickStatLabel: {
+    fontSize: 12,
+    color: darkTheme.colors.textSecondary,
+    marginTop: 4,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginHorizontal: 8,
   },
   chipContainer: {
     flexDirection: 'row',
@@ -682,5 +713,24 @@ const styles = StyleSheet.create({
   aiButton: {
     marginTop: 16,
     backgroundColor: '#9C7CF4',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.3)',
+    gap: 8,
+  },
+  logoutButtonText: {
+    color: '#FF6B6B',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

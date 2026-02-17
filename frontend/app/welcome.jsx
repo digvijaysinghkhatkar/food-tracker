@@ -1,16 +1,48 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-import { Platform } from 'react-native'; // Added Platform import
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import darkTheme, { gradients } from '../theme/darkTheme';
 import { GradientBackground } from '../components/ui/GradientComponents';
 import HeroCarousel from '../components/ui/HeroCarousel';
 
 export default function WelcomeScreen() {
   const router = useRouter();
+
+  // Animations
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(-30)).current;
+  const carouselOpacity = useRef(new Animated.Value(0)).current;
+  const carouselScale = useRef(new Animated.Value(0.9)).current;
+  const ctaOpacity = useRef(new Animated.Value(0)).current;
+  const ctaTranslateY = useRef(new Animated.Value(30)).current;
+  const buttonsOpacity = useRef(new Animated.Value(0)).current;
+  const buttonsTranslateY = useRef(new Animated.Value(40)).current;
+
+  useEffect(() => {
+    Animated.stagger(200, [
+      Animated.parallel([
+        Animated.timing(headerOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.timing(headerTranslateY, { toValue: 0, duration: 600, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(carouselOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.spring(carouselScale, { toValue: 1, friction: 8, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(ctaOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(ctaTranslateY, { toValue: 0, duration: 500, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(buttonsOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+        Animated.timing(buttonsTranslateY, { toValue: 0, duration: 500, useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
 
   const handleSignUp = () => {
     router.push('/auth/register');
@@ -24,46 +56,60 @@ export default function WelcomeScreen() {
     <GradientBackground colors={gradients.background} style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="light" />
+        
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header with Icon */}
+          <Animated.View style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerTranslateY }] }]}>
+            <View style={styles.logoContainer}>
+              <MaterialCommunityIcons name="food-apple" size={48} color={darkTheme.colors.primary} />
+            </View>
+            <Text style={styles.welcomeText}>Welcome to</Text>
+            <Text style={styles.appName}>Balanced Bites</Text>
+            <Text style={styles.tagline}>Your Personal Nutrition Companion</Text>
+          </Animated.View>
 
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome to</Text>
-          <Text style={styles.appName}>Balanced Bites</Text>
-        </View>
+          {/* Hero Image Carousel */}
+          <Animated.View style={[styles.heroSection, { opacity: carouselOpacity, transform: [{ scale: carouselScale }] }]}>
+            <HeroCarousel />
+          </Animated.View>
 
-        {/* Hero Image Carousel */}
-        <View style={styles.heroSection}>
-          <HeroCarousel />
-        </View>
+          {/* Call to Action */}
+          <Animated.View style={[styles.ctaSection, { opacity: ctaOpacity, transform: [{ translateY: ctaTranslateY }] }]}>
+            <Text style={styles.ctaTitle}>Start Your Journey Today</Text>
+            <Text style={styles.ctaSubtitle}>Join thousands achieving their health goals</Text>
+          </Animated.View>
 
-        {/* Call to Action */}
-        <View style={styles.ctaSection}>
-          <Text style={styles.ctaTitle}>Ready for some wins?</Text>
-          <Text style={styles.ctaSubtitle}>Start tracking, it's easy!</Text>
-        </View>
+          {/* Action Buttons */}
+          <Animated.View style={[styles.buttonContainer, { opacity: buttonsOpacity, transform: [{ translateY: buttonsTranslateY }] }]}>
+            <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
+              <LinearGradient
+                colors={[darkTheme.colors.primary, '#4A90E2']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.signUpButtonText}>Get Started Free</Text>
+                <MaterialCommunityIcons name="arrow-right" size={20} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
 
-        {/* Action Buttons */}
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
-            <LinearGradient
-              colors={[darkTheme.colors.primary, '#4A90E2']}
-              style={styles.buttonGradient}
-            >
-              <Text style={styles.signUpButtonText}>Sign Up For Free</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+              <Text style={styles.loginButtonText}>Already Have an Account?</Text>
+            </TouchableOpacity>
+          </Animated.View>
 
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>Log In</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Version */}
-        <Text style={styles.version}>Version 1.0.0</Text>
+          {/* Version */}
+          <Text style={styles.version}>v1.0.0 • Made with ♥</Text>
+        </ScrollView>
       </SafeAreaView>
     </GradientBackground>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -71,99 +117,118 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 20,
   },
   header: {
     alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  logoContainer: {
+    marginBottom: 12,
+    padding: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
   },
   welcomeText: {
-    fontSize: 20,
+    fontSize: 16,
     color: darkTheme.colors.textSecondary,
-    marginBottom: 8,
+    marginBottom: 4,
     fontWeight: '400',
   },
   appName: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
     color: darkTheme.colors.primary,
-    letterSpacing: -0.5,
+    letterSpacing: -1,
+    marginBottom: 8,
+  },
+  tagline: {
+    fontSize: 14,
+    color: darkTheme.colors.textSecondary,
+    textAlign: 'center',
+    opacity: 0.8,
   },
   heroSection: {
-    flex: 0.6,
+    height: 340,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 16,
     backgroundColor: 'transparent',
     width: '100%',
   },
+
   ctaSection: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
     paddingHorizontal: 20,
+    marginTop: 8,
   },
   ctaTitle: {
-    fontSize: 22,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: darkTheme.colors.onSurface,
     textAlign: 'center',
-    marginBottom: 4,
-    lineHeight: 28,
+    marginBottom: 6,
+    lineHeight: 26,
   },
   ctaSubtitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: darkTheme.colors.onSurface,
+    fontSize: 14,
+    color: darkTheme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 28,
+    lineHeight: 20,
   },
   buttonContainer: {
-    marginBottom: 20,
-    paddingHorizontal: 10,
+    marginBottom: 12,
+    marginTop: 8,
   },
   signUpButton: {
-    marginBottom: 16,
-    borderRadius: 25,
-    elevation: 3,
-    shadowColor: '#000',
+    marginBottom: 14,
+    borderRadius: 28,
+    elevation: 4,
+    shadowColor: darkTheme.colors.primary,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOpacity: 0.3,
+    shadowRadius: 4.84,
     overflow: 'hidden',
   },
   buttonGradient: {
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
   },
   signUpButtonText: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-    letterSpacing: -0.2,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
   loginButton: {
     paddingVertical: 16,
     alignItems: 'center',
     backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: darkTheme.colors.primary,
-    borderRadius: 25,
   },
   loginButtonText: {
     color: darkTheme.colors.primary,
-    fontSize: 18,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
   },
   version: {
     textAlign: 'center',
     color: darkTheme.colors.textSecondary,
-    fontSize: 12,
+    fontSize: 11,
     marginBottom: 10,
+    opacity: 0.6,
   },
 });

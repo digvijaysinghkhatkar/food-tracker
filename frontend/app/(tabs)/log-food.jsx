@@ -162,8 +162,18 @@ export default function LogFoodScreen() {
     setLoading(true);
     
     try {
-      // Since we removed authentication, just simulate success
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // Log each food item to the backend
+      const promises = foodItems.map(item => 
+        axios.post(`${API_URL}/food-log`, {
+          mealType: item.mealType,
+          foodName: item.foodName,
+          quantity: item.quantity,
+          unit: item.unit,
+          notes: item.notes
+        })
+      );
+
+      await Promise.all(promises);
       
       Alert.alert(
         'Success!', 
@@ -223,159 +233,7 @@ export default function LogFoodScreen() {
     </Card>
   );
 
-  const AddFoodModal = () => (
-    <Portal>
-      <Modal
-        visible={modalVisible}
-        onDismiss={closeModal}
-        contentContainerStyle={styles.modalContainer}
-      >
-        <Card style={styles.modalCard}>
-          <Card.Content>
-            <Text style={styles.modalTitle}>
-              {editingIndex >= 0 ? 'Edit Food Item' : 'Add Food Item'}
-            </Text>
-            
-            {/* Food Name Input */}
-            <TextInput
-              label="Food Name"
-              value={currentFood.foodName}
-              onChangeText={(text) => setCurrentFood({...currentFood, foodName: text})}
-              mode="outlined"
-              style={styles.modalInput}
-              theme={{
-                colors: {
-                  primary: darkTheme.colors.primary,
-                  outline: darkTheme.colors.outline,
-                },
-              }}
-              placeholder="e.g., Grilled Chicken, Rice, Apple"
-            />
-
-            {/* Quantity Input */}
-            <TextInput
-              label="Quantity"
-              value={currentFood.quantity}
-              onChangeText={(text) => setCurrentFood({...currentFood, quantity: text})}
-              mode="outlined"
-              keyboardType="numeric"
-              style={styles.modalInput}
-              theme={{
-                colors: {
-                  primary: darkTheme.colors.primary,
-                  outline: darkTheme.colors.outline,
-                },
-              }}
-              placeholder="100"
-            />
-
-            {/* Unit Dropdown */}
-            <Menu
-              visible={unitMenuVisible}
-              onDismiss={() => setUnitMenuVisible(false)}
-              anchor={
-                <TouchableOpacity
-                  style={styles.dropdownButton}
-                  onPress={() => setUnitMenuVisible(true)}
-                >
-                  <Text style={styles.dropdownButtonText}>
-                    Unit: {UNITS.find(u => u.value === currentFood.unit)?.label}
-                  </Text>
-                  <MaterialCommunityIcons 
-                    name="chevron-down" 
-                    size={24} 
-                    color={darkTheme.colors.primary}
-                  />
-                </TouchableOpacity>
-              }
-              contentStyle={styles.menuContent}
-            >
-              {UNITS.map((unit) => (
-                <Menu.Item
-                  key={unit.value}
-                  title={unit.label}
-                  onPress={() => {
-                    setCurrentFood({...currentFood, unit: unit.value});
-                    setUnitMenuVisible(false);
-                  }}
-                  titleStyle={styles.menuItemText}
-                />
-              ))}
-            </Menu>
-
-            {/* Meal Type Dropdown */}
-            <Menu
-              visible={mealTypeMenuVisible}
-              onDismiss={() => setMealTypeMenuVisible(false)}
-              anchor={
-                <TouchableOpacity
-                  style={styles.dropdownButton}
-                  onPress={() => setMealTypeMenuVisible(true)}
-                >
-                  <Text style={styles.dropdownButtonText}>
-                    Meal: {MEAL_TYPES.find(m => m.value === currentFood.mealType)?.label}
-                  </Text>
-                  <MaterialCommunityIcons 
-                    name="chevron-down" 
-                    size={24} 
-                    color={darkTheme.colors.primary}
-                  />
-                </TouchableOpacity>
-              }
-              contentStyle={styles.menuContent}
-            >
-              {MEAL_TYPES.map((meal) => (
-                <Menu.Item
-                  key={meal.value}
-                  title={meal.label}
-                  onPress={() => {
-                    setCurrentFood({...currentFood, mealType: meal.value});
-                    setMealTypeMenuVisible(false);
-                  }}
-                  titleStyle={styles.menuItemText}
-                />
-              ))}
-            </Menu>
-
-            {/* Notes Input */}
-            <TextInput
-              label="Notes (Optional)"
-              value={currentFood.notes}
-              onChangeText={(text) => setCurrentFood({...currentFood, notes: text})}
-              mode="outlined"
-              multiline
-              numberOfLines={2}
-              style={styles.modalInput}
-              theme={{
-                colors: {
-                  primary: darkTheme.colors.primary,
-                  outline: darkTheme.colors.outline,
-                },
-              }}
-              placeholder="Any additional details..."
-            />
-          </Card.Content>
-          
-          <Card.Actions style={styles.modalActions}>
-            <Button
-              mode="outlined"
-              onPress={closeModal}
-              textColor={darkTheme.colors.onSurface}
-            >
-              Cancel
-            </Button>
-            <Button
-              mode="contained"
-              onPress={addOrUpdateFoodItem}
-              buttonColor={darkTheme.colors.primary}
-            >
-              {editingIndex >= 0 ? 'Update' : 'Add'}
-            </Button>
-          </Card.Actions>
-        </Card>
-      </Modal>
-    </Portal>
-  );
+  // AddFoodModal is inlined in JSX below to prevent re-mount on state change
 
   return (
     <GradientBackground>
@@ -449,8 +307,153 @@ export default function LogFoodScreen() {
           color="#FFFFFF"
         />
 
-        {/* Add/Edit Food Modal */}
-        <AddFoodModal />
+        {/* Add/Edit Food Modal - Inlined to prevent re-mount on state change */}
+        <Portal>
+          <Modal
+            visible={modalVisible}
+            onDismiss={closeModal}
+            contentContainerStyle={styles.modalContainer}
+          >
+            <Card style={styles.modalCard}>
+              <Card.Content>
+                <Text style={styles.modalTitle}>
+                  {editingIndex >= 0 ? 'Edit Food Item' : 'Add Food Item'}
+                </Text>
+                
+                <TextInput
+                  label="Food Name"
+                  value={currentFood.foodName}
+                  onChangeText={(text) => setCurrentFood(prev => ({...prev, foodName: text}))}
+                  mode="outlined"
+                  style={styles.modalInput}
+                  theme={{
+                    colors: {
+                      primary: darkTheme.colors.primary,
+                      outline: darkTheme.colors.outline,
+                    },
+                  }}
+                  placeholder="e.g., Grilled Chicken, Rice, Apple"
+                />
+
+                <TextInput
+                  label="Quantity"
+                  value={currentFood.quantity}
+                  onChangeText={(text) => setCurrentFood(prev => ({...prev, quantity: text}))}
+                  mode="outlined"
+                  keyboardType="numeric"
+                  style={styles.modalInput}
+                  theme={{
+                    colors: {
+                      primary: darkTheme.colors.primary,
+                      outline: darkTheme.colors.outline,
+                    },
+                  }}
+                  placeholder="100"
+                />
+
+                <Menu
+                  visible={unitMenuVisible}
+                  onDismiss={() => setUnitMenuVisible(false)}
+                  anchor={
+                    <TouchableOpacity
+                      style={styles.dropdownButton}
+                      onPress={() => setUnitMenuVisible(true)}
+                    >
+                      <Text style={styles.dropdownButtonText}>
+                        Unit: {UNITS.find(u => u.value === currentFood.unit)?.label}
+                      </Text>
+                      <MaterialCommunityIcons 
+                        name="chevron-down" 
+                        size={24} 
+                        color={darkTheme.colors.primary}
+                      />
+                    </TouchableOpacity>
+                  }
+                  contentStyle={styles.menuContent}
+                >
+                  {UNITS.map((unit) => (
+                    <Menu.Item
+                      key={unit.value}
+                      title={unit.label}
+                      onPress={() => {
+                        setCurrentFood(prev => ({...prev, unit: unit.value}));
+                        setUnitMenuVisible(false);
+                      }}
+                      titleStyle={styles.menuItemText}
+                    />
+                  ))}
+                </Menu>
+
+                <Menu
+                  visible={mealTypeMenuVisible}
+                  onDismiss={() => setMealTypeMenuVisible(false)}
+                  anchor={
+                    <TouchableOpacity
+                      style={styles.dropdownButton}
+                      onPress={() => setMealTypeMenuVisible(true)}
+                    >
+                      <Text style={styles.dropdownButtonText}>
+                        Meal: {MEAL_TYPES.find(m => m.value === currentFood.mealType)?.label}
+                      </Text>
+                      <MaterialCommunityIcons 
+                        name="chevron-down" 
+                        size={24} 
+                        color={darkTheme.colors.primary}
+                      />
+                    </TouchableOpacity>
+                  }
+                  contentStyle={styles.menuContent}
+                >
+                  {MEAL_TYPES.map((meal) => (
+                    <Menu.Item
+                      key={meal.value}
+                      title={meal.label}
+                      onPress={() => {
+                        setCurrentFood(prev => ({...prev, mealType: meal.value}));
+                        setMealTypeMenuVisible(false);
+                      }}
+                      titleStyle={styles.menuItemText}
+                    />
+                  ))}
+                </Menu>
+
+                <TextInput
+                  label="Notes (Optional)"
+                  value={currentFood.notes}
+                  onChangeText={(text) => setCurrentFood(prev => ({...prev, notes: text}))}
+                  mode="outlined"
+                  multiline
+                  numberOfLines={2}
+                  style={styles.modalInput}
+                  theme={{
+                    colors: {
+                      primary: darkTheme.colors.primary,
+                      outline: darkTheme.colors.outline,
+                    },
+                  }}
+                  placeholder="Any additional details..."
+                />
+              </Card.Content>
+              
+              <Card.Actions style={styles.modalActions}>
+                <Button
+                  mode="outlined"
+                  onPress={closeModal}
+                  textColor={darkTheme.colors.onSurface}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  mode="contained"
+                  onPress={addOrUpdateFoodItem}
+                  buttonColor={darkTheme.colors.primary}
+                >
+                  {editingIndex >= 0 ? 'Update' : 'Add'}
+                </Button>
+              </Card.Actions>
+            </Card>
+          </Modal>
+        </Portal>
       </SafeAreaView>
     </GradientBackground>
   );
